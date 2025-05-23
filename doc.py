@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-Smart CLI Documentation Generator with AI-Powered Analysis
-A tool to automatically generate intelligent documentation, visual graphs, and project structure
-for any codebase using AI/NLP analysis.
-"""
-
 import os
 import sys
 import argparse
