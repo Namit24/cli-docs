@@ -1,7 +1,7 @@
 import unittest
 from code_doc_generator.analyzer import CodeAnalyzer
 from pathlib import Path
-from typing import List  # Added for type hints
+from typing import List
 
 class TestCodeAnalyzer(unittest.TestCase):
     def setUp(self):

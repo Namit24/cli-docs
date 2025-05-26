@@ -8,8 +8,8 @@ class TestEnhancedDocumentationGenerator(unittest.TestCase):
         self.doc_generator = EnhancedDocumentationGenerator(self.analyzer)
 
     def test_generate_readme(self):
-        readme = self.doc_generator.generate_readme()  # Fixed method name
-        self.assertIn(f"# {self.analyzer.project_name}", readme)  # Adjusted to match project name
+        readme = self.doc_generator.generate_readme()
+        self.assertIn(f"# {self.analyzer.project_name}", readme)
         self.assertIn("## Overview", readme)
         self.assertIn("## Installation", readme)
         self.assertIn("## Dependencies", readme)
@@ -26,11 +26,12 @@ class TestEnhancedDocumentationGenerator(unittest.TestCase):
                         "ai_description": "**Detected Purposes**: utils"
                     }
                 }
-            ],  # Fixed closing bracket
+            ],
             "total_files": 1,
             "project_name": "test_project"
         }
         summary = self.doc_generator._generate_project_summary(project_analysis)
+        print(f"Summary output: {repr(summary)}")  # Debug print
         self.assertIn("Project Type: Utility Library", summary)
         self.assertIn("Languages: Python", summary)
         self.assertIn("Scale: 1 files, 100 lines of code", summary)

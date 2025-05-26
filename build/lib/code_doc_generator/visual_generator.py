@@ -6,6 +6,7 @@ import zipfile
 import os
 import subprocess
 import tempfile
+from typing import Dict,List
 
 try:
     import matplotlib.patches as patches

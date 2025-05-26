@@ -4,6 +4,7 @@ from typing import Dict, List  # Added import
 from code_doc_generator.analyzer import CodeAnalyzer  # Adjusted import
 from code_doc_generator.ai_engine import AIDocumentationEngine  # Adjusted import
 from code_doc_generator.visual_generator import VisualGraphGenerator  # Adjusted import
+from typing import Dict,List
 
 class EnhancedDocumentationGenerator:
     # ... (rest of the file remains unchanged)

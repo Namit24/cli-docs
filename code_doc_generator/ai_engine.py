@@ -1,5 +1,6 @@
 from typing import Dict, List
 from pathlib import Path
+import warnings
 try:
     from transformers import pipeline
     HAS_TRANSFORMERS = True
@@ -14,6 +15,8 @@ class AIDocumentationEngine:
     def _initialize_ai_models(self):
         if HAS_TRANSFORMERS:
             try:
+                # Suppress transformers warnings
+                warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
                 self.summarizer = pipeline("summarization", model="t5-small", device=-1)
                 print("✅ AI summarization model (t5-small) loaded")
             except Exception as e:
@@ -50,7 +53,10 @@ class AIDocumentationEngine:
 
         if self.summarizer and len(code_content) < 5000:  # Limit content size for AI
             try:
-                summary = self.summarizer(code_content[:1000], max_length=150, min_length=50)[0]['summary_text']
+                # Dynamically set max_length to half the input length or 50, whichever is greater
+                input_length = len(code_content.split())
+                max_length = max(50, input_length // 2)
+                summary = self.summarizer(code_content[:1000], max_length=max_length, min_length=20)[0]['summary_text']
                 return f"**AI Summary**: {summary}\n**Detected Purposes**: {', '.join(detected_purposes) or 'General'}"
             except Exception:
                 pass
