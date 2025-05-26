@@ -45,7 +45,9 @@ class EnhancedDocumentationGenerator:
         for file_path in code_files:
             analysis = self.analyzer.analyze_file(file_path)
             if 'error' not in analysis:
-                analysis['ai_description'] = self.ai_engine.analyze_code_purpose(file_path, self._read_file(file_path), analysis)
+                # Only analyze code files for AI description
+                if file_path.suffix in ['.py', '.js', '.ts']:  # Add more extensions if needed
+                    analysis['ai_description'] = self.ai_engine.analyze_code_purpose(file_path, self._read_file(file_path), analysis)
                 project_analysis['files'].append({
                     'path': str(file_path.relative_to(self.analyzer.project_path)),
                     'analysis': analysis
@@ -177,10 +179,7 @@ class EnhancedDocumentationGenerator:
         return "Could not generate graphs (matplotlib not installed)."
 
     def generate_structure(self) -> str:
-        print("🏗️ Generating project structure visualization...")
+        print("🏗️ Generating project structure...")
         project_analysis = self._analyze_project()
-        structure_graph = self.visual_generator.create_project_structure_graph(project_analysis, self.analyzer.project_name)
-        if structure_graph != "matplotlib not available":
-            print(f"📊 Structure saved to: {structure_graph}")
-            return structure_graph
-        return "Could not generate structure (matplotlib not installed)."
+        structure_text = self.visual_generator.create_project_structure_text(project_analysis, self.analyzer.project_path)
+        return structure_text

@@ -10,12 +10,10 @@ except ImportError:
 class AIDocumentationEngine:
     def __init__(self):
         self.summarizer = None
-        self._initialize_ai_models()
 
     def _initialize_ai_models(self):
-        if HAS_TRANSFORMERS:
+        if HAS_TRANSFORMERS and self.summarizer is None:
             try:
-                # Suppress transformers warnings
                 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
                 self.summarizer = pipeline(
                     "summarization",
@@ -27,7 +25,7 @@ class AIDocumentationEngine:
             except Exception as e:
                 print(f"⚠️ Could not load AI models: {e}")
                 self.summarizer = None
-        else:
+        elif not HAS_TRANSFORMERS:
             print("⚠️ Transformers not available. Using rule-based analysis.")
 
     def analyze_code_purpose(self, file_path: Path, code_content: str, analysis: Dict) -> str:
@@ -56,19 +54,21 @@ class AIDocumentationEngine:
                     any(keyword in imp.lower() for imp in imports for keyword in keywords)):
                 detected_purposes.append(purpose)
 
-        if self.summarizer and len(code_content) < 5000:
-            try:
-                input_length = len(code_content.split())
-                max_length = max(20, input_length // 2)
-                summary = self.summarizer(
-                    code_content[:1000],
-                    max_length=max_length,
-                    min_length=10,
-                    do_sample=False
-                )[0]['summary_text']
-                return f"**AI Summary**: {summary}\n**Detected Purposes**: {', '.join(detected_purposes) or 'General'}"
-            except Exception:
-                pass
+        if len(code_content) < 5000:
+            self._initialize_ai_models()
+            if self.summarizer:
+                try:
+                    input_length = len(code_content.split())
+                    max_length = max(20, input_length // 2)
+                    summary = self.summarizer(
+                        code_content[:1000],
+                        max_length=max_length,
+                        min_length=10,
+                        do_sample=False
+                    )[0]['summary_text']
+                    return f"**AI Summary**: {summary}\n**Detected Purposes**: {', '.join(detected_purposes) or 'General'}"
+                except Exception:
+                    pass
 
         return self._generate_rule_based_description(file_name, extension, functions, classes, imports, detected_purposes)
 

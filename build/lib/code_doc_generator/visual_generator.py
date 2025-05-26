@@ -22,6 +22,50 @@ class VisualGraphGenerator:
         if not HAS_MATPLOTLIB:
             print("⚠️ matplotlib not available. Install with: pip install matplotlib networkx")
 
+    def create_project_structure_text(self, project_analysis: Dict, project_root: Path) -> str:
+        """Generate a text-based directory tree structure with file descriptions."""
+        def build_tree(directory: Path, prefix: str = "", level: int = 0) -> List[str]:
+            lines = []
+            entries = sorted(directory.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
+            for i, entry in enumerate(entries):
+                is_last = i == len(entries) - 1
+                connector = "└── " if is_last else "├── "
+                new_prefix = prefix + ("    " if is_last else "│   ")
+
+                # Get description from project_analysis
+                rel_path = str(entry.relative_to(project_root))
+                description = ""
+                for file_info in project_analysis.get('files', []):
+                    if file_info.get('path') == rel_path:
+                        analysis = file_info.get('analysis', {})
+                        if 'ai_description' in analysis:
+                            description = f"  # {analysis['ai_description'].splitlines()[0]}"
+                        elif 'language' in analysis:
+                            description = f"  # {analysis['language']} file"
+                        break
+                else:
+                    if entry.is_dir():
+                        description = "  # Directory"
+                    elif entry.name == "setup.py":
+                        description = "  # Package setup"
+                    elif entry.name == "README.md":
+                        description = "  # Project documentation"
+                    elif entry.name == "LICENSE":
+                        description = "  # License file"
+                    elif entry.name == "requirements.txt":
+                        description = "  # Project dependencies"
+                    elif entry.name == "__init__.py":
+                        description = "  # Package initializer"
+
+                lines.append(f"{prefix}{connector}{entry.name}{description}")
+                if entry.is_dir():
+                    lines.extend(build_tree(entry, new_prefix, level + 1))
+            return lines
+
+        tree_lines = [project_root.name + "/"]
+        tree_lines.extend(build_tree(project_root))
+        return "\n".join(tree_lines)
+
     def create_project_structure_graph(self, project_analysis: Dict, project_name: str) -> str:
         if not HAS_MATPLOTLIB:
             return "matplotlib not available"
