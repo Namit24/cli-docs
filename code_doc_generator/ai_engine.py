@@ -17,7 +17,12 @@ class AIDocumentationEngine:
             try:
                 # Suppress transformers warnings
                 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
-                self.summarizer = pipeline("summarization", model="t5-small", device=-1)
+                self.summarizer = pipeline(
+                    "summarization",
+                    model="t5-small",
+                    device=-1,
+                    framework="pt"  # Ensure PyTorch framework
+                )
                 print("✅ AI summarization model (t5-small) loaded")
             except Exception as e:
                 print(f"⚠️ Could not load AI models: {e}")
@@ -53,10 +58,15 @@ class AIDocumentationEngine:
 
         if self.summarizer and len(code_content) < 5000:  # Limit content size for AI
             try:
-                # Dynamically set max_length to half the input length or 50, whichever is greater
+                # Set max_length dynamically, half the input length or 50, whichever is greater
                 input_length = len(code_content.split())
-                max_length = max(50, input_length // 2)
-                summary = self.summarizer(code_content[:1000], max_length=max_length, min_length=20)[0]['summary_text']
+                max_length = max(20, input_length // 2)
+                summary = self.summarizer(
+                    code_content[:1000],
+                    max_length=max_length,
+                    min_length=10,
+                    do_sample=False  # Disable sampling to avoid max_new_tokens
+                )[0]['summary_text']
                 return f"**AI Summary**: {summary}\n**Detected Purposes**: {', '.join(detected_purposes) or 'General'}"
             except Exception:
                 pass
