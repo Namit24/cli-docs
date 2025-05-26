@@ -21,7 +21,7 @@ class AIDocumentationEngine:
                     "summarization",
                     model="t5-small",
                     device=-1,
-                    framework="pt"  # Ensure PyTorch framework
+                    framework="pt"
                 )
                 print("✅ AI summarization model (t5-small) loaded")
             except Exception as e:
@@ -56,16 +56,15 @@ class AIDocumentationEngine:
                     any(keyword in imp.lower() for imp in imports for keyword in keywords)):
                 detected_purposes.append(purpose)
 
-        if self.summarizer and len(code_content) < 5000:  # Limit content size for AI
+        if self.summarizer and len(code_content) < 5000:
             try:
-                # Set max_length dynamically, half the input length or 50, whichever is greater
                 input_length = len(code_content.split())
                 max_length = max(20, input_length // 2)
                 summary = self.summarizer(
                     code_content[:1000],
                     max_length=max_length,
                     min_length=10,
-                    do_sample=False  # Disable sampling to avoid max_new_tokens
+                    do_sample=False
                 )[0]['summary_text']
                 return f"**AI Summary**: {summary}\n**Detected Purposes**: {', '.join(detected_purposes) or 'General'}"
             except Exception:
