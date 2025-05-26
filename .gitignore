@@ -1,5 +1,5 @@
-/test_project
-/build
-/code_doc_generator.egg-info
-/code_doc_generator.log
 /.env
+/.venv
+/code_doc_generator.log
+/code_doc_generator.egg-info
+/test_project
