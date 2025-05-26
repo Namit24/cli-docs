@@ -1,0 +1,7 @@
+matplotlib>=3.5.0
+networkx>=2.8.0
+numpy>=1.21.0
+
+[:python_version >= "3.7"]
+transformers>=4.20.0
+torch>=1.10.0

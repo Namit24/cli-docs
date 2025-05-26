@@ -4,6 +4,8 @@ import numpy as np
 from pathlib import Path
 import zipfile
 import os
+import subprocess
+import tempfile
 
 try:
     import matplotlib.patches as patches
@@ -160,18 +162,57 @@ class VisualGraphGenerator:
         plt.close()
         return str(output_path)
 
-    def create_graph_zip(self, file_path: str, analysis: Dict, project_name: str) -> str:
-        if not HAS_MATPLOTLIB:
-            return "matplotlib not available"
+        def extract_plots_from_file(self, file_path: str, project_name: str) -> List[str]:
+            if not HAS_MATPLOTLIB:
+                return []
 
-        graphs = []
-        dep_graph = self.create_file_dependency_graph(file_path, analysis, project_name)
-        if dep_graph != "matplotlib not available":
-            graphs.append(dep_graph)
+            if Path(file_path).suffix != '.py':
+                return []
 
-        zip_path = self.output_dir / f'{project_name}_graphs.zip'
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for graph in graphs:
-                if os.path.exists(graph):
-                    zipf.write(graph, os.path.basename(graph))
-        return str(zip_path)
+            output_paths = []
+            with tempfile.TemporaryDirectory() as tmpdir:
+                wrapper_script = Path(tmpdir) / 'run_plots.py'
+                with open(wrapper_script, 'w') as f:
+                    f.write(f"""
+    import matplotlib.pyplot as plt
+    import os
+    plt.switch_backend('Agg')  # Non-interactive backend
+    try:
+        with open('{file_path}') as f:
+            code = f.read()
+        exec(code, {{'plt': plt}})
+        for i, fig in enumerate(plt.get_fignums()):
+            plt.figure(i)
+            plt.savefig(os.path.join('{tmpdir}', f'plot_{{i}}.png'))
+            plt.close()
+    except Exception:
+        pass
+    """)
+                try:
+                    subprocess.run(['python', str(wrapper_script)], check=True, capture_output=True)
+                    for i in range(100):  # Arbitrary limit
+                        plot_path = Path(tmpdir) / f'plot_{i}.png'
+                        if plot_path.exists():
+                            dest_path = self.output_dir / f'{project_name}_plot_{i}.png'
+                            os.rename(plot_path, dest_path)
+                            output_paths.append(str(dest_path))
+                except subprocess.CalledProcessError:
+                    pass
+            return output_paths
+
+        def create_graph_zip(self, file_path: str, analysis: Dict, project_name: str) -> str:
+            if not HAS_MATPLOTLIB:
+                return "matplotlib not available"
+
+            graphs = []
+            dep_graph = self.create_file_dependency_graph(file_path, analysis, project_name)
+            if dep_graph != "matplotlib not available":
+                graphs.append(dep_graph)
+            graphs.extend(self.extract_plots_from_file(file_path, project_name))
+
+            zip_path = self.output_dir / f'{project_name}_graphs.zip'
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for graph in graphs:
+                    if os.path.exists(graph):
+                        zipf.write(graph, os.path.basename(graph))
+            return str(zip_path)
