@@ -2,3 +2,4 @@
 /build
 /code_doc_generator.egg-info
 /code_doc_generator.log
+/.env
